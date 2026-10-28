@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   mockPatients,
@@ -7,6 +7,7 @@ import {
   mockInvoices,
   mockMedicalRecords,
 } from '../../lib/mockData';
+import { getStoredPatients, getStoredAppointments } from '../../lib/storage';
 import { StatCard } from '../../components/common/StatCard';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
@@ -25,17 +26,50 @@ import {
   AlertCircle,
   PlusCircle,
 } from 'lucide-react';
-import { Prescription, Invoice } from '../../types';
+import { Prescription, Invoice, Patient, Appointment } from '../../types';
 import { Link } from 'react-router-dom';
 
 export const PatientPortal: React.FC = () => {
   const { user } = useAuth();
+  const [appointments, setAppointments] = useState<Appointment[]>(() => getStoredAppointments(mockAppointments));
+
+  useEffect(() => {
+    const handleAppointmentsChanged = (e: Event) => {
+      const customEvent = e as CustomEvent<Appointment[]>;
+      if (customEvent.detail) setAppointments(customEvent.detail);
+      else setAppointments(getStoredAppointments());
+    };
+    window.addEventListener('medicare_appointments_changed', handleAppointmentsChanged);
+    return () => {
+      window.removeEventListener('medicare_appointments_changed', handleAppointmentsChanged);
+    };
+  }, []);
 
   // Find patient record
-  const currentPatient =
-    mockPatients.find(p => p.email === user?.email) || mockPatients[0];
+  const allPatients = getStoredPatients(mockPatients);
+  const currentPatient: Patient =
+    allPatients.find(p => p.email && user?.email && p.email.toLowerCase() === user.email.toLowerCase()) ||
+    allPatients.find(p => p.fullName.toLowerCase() === (user?.fullName || '').toLowerCase()) ||
+    allPatients[0] || {
+      id: user?.id || 'pat-user',
+      patientId: 'PAT-REG',
+      fullName: user?.fullName || 'Registered Patient',
+      email: user?.email,
+      phone: user?.phone || 'On file',
+      dateOfBirth: '1995-01-01',
+      gender: 'other',
+      bloodGroup: 'O+',
+      address: 'On file',
+      emergencyContactName: 'Family',
+      emergencyContactPhone: user?.phone || 'On file',
+      emergencyContactRelation: 'Self',
+      isArchived: false,
+      admissionStatus: 'outpatient',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-  const myAppointments = mockAppointments.filter(
+  const myAppointments = appointments.filter(
     a => a.patientId === currentPatient.id || a.patientName === currentPatient.fullName
   );
   const myPrescriptions = mockPrescriptions.filter(
@@ -136,7 +170,17 @@ export const PatientPortal: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {myAppointments.map(apt => (
+            {myAppointments.length === 0 ? (
+              <div className="p-6 text-center rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-800">
+                <p className="text-slate-500 dark:text-slate-400 text-xs mb-3">No upcoming clinical appointments scheduled.</p>
+                <Link to="/appointments">
+                  <Button variant="outline" size="sm" leftIcon={<PlusCircle className="w-3.5 h-3.5" />}>
+                    Schedule Visit
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              myAppointments.map(apt => (
               <div
                 key={apt.id}
                 className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-start justify-between text-xs"
@@ -171,7 +215,7 @@ export const PatientPortal: React.FC = () => {
                   <span className="font-bold text-slate-900 dark:text-white">${apt.consultationFee}</span>
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
 

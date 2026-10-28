@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { AdminDashboard } from './AdminDashboard';
 import { DoctorDashboard } from './DoctorDashboard';
@@ -7,7 +8,11 @@ import { ReceptionistDashboard } from './ReceptionistDashboard';
 import { PatientPortal } from './PatientPortal';
 
 export const DashboardIndex: React.FC = () => {
-  const { role } = useAuth();
+  const { user, role } = useAuth();
+
+  if (!user || !role) {
+    return <Navigate to="/login" replace />;
+  }
 
   switch (role) {
     case 'administrator':
@@ -21,6 +26,6 @@ export const DashboardIndex: React.FC = () => {
     case 'patient':
       return <PatientPortal />;
     default:
-      return <AdminDashboard />;
+      return <Navigate to="/login" replace />;
   }
 };

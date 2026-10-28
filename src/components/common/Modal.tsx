@@ -50,15 +50,26 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onTouchEnd={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
+        onTouchEnd={onClose}
       />
 
       {/* Dialog container */}
       <div
+        onClick={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
         className={cn(
           'relative w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl transition-all my-8 max-h-[90vh] flex flex-col z-10 animate-in fade-in zoom-in-95 duration-150',
           maxWidthClasses[maxWidth]

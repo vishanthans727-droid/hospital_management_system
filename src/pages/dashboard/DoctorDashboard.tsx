@@ -27,7 +27,7 @@ export const DoctorDashboard: React.FC = () => {
 
   // Find doctor's appointments
   const myAppointments = mockAppointments.filter(
-    a => a.doctorName.includes(user?.fullName || '') || a.doctorId === 'doc-01'
+    a => (user?.fullName && a.doctorName.toLowerCase().includes(user.fullName.toLowerCase())) || a.doctorId === user?.id
   );
 
   const pendingConsultations = myAppointments.filter(
@@ -37,7 +37,7 @@ export const DoctorDashboard: React.FC = () => {
   const completedToday = myAppointments.filter(a => a.status === 'completed');
 
   const myInpatients = mockAdmissions.filter(
-    a => a.admittingDoctorName.includes(user?.fullName || '') || a.admittingDoctorId === 'doc-01'
+    a => (user?.fullName && a.admittingDoctorName.toLowerCase().includes(user.fullName.toLowerCase())) || a.admittingDoctorId === user?.id
   );
 
   const criticalLabs = mockLabOrders.filter(

@@ -32,9 +32,9 @@ export const BedManagement: React.FC = () => {
 
   // Admit Modal State
   const [isAdmitModalOpen, setIsAdmitModalOpen] = useState(false);
-  const [admitPatientId, setAdmitPatientId] = useState(mockPatients[0].id);
+  const [admitPatientId, setAdmitPatientId] = useState(mockPatients[0]?.id || '');
   const [admitBedId, setAdmitBedId] = useState('');
-  const [admitDoctorId, setAdmitDoctorId] = useState(mockDoctors[0].id);
+  const [admitDoctorId, setAdmitDoctorId] = useState(mockDoctors[0]?.id || '');
   const [admissionReason, setAdmissionReason] = useState('');
 
   // Discharge Modal State
@@ -76,6 +76,14 @@ export const BedManagement: React.FC = () => {
 
     const patient = mockPatients.find(p => p.id === admitPatientId) || mockPatients[0];
     const doctor = mockDoctors.find(d => d.id === admitDoctorId) || mockDoctors[0];
+    if (!patient) {
+      toast.error('No registered patient found. Please register a patient first.');
+      return;
+    }
+    if (!doctor) {
+      toast.error('No registered doctor found. Please register a doctor first.');
+      return;
+    }
     const newAdmCode = generateCustomId('ADM');
 
     const newAdmission: Admission = {

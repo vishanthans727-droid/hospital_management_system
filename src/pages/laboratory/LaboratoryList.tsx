@@ -36,8 +36,8 @@ export const LaboratoryList: React.FC = () => {
   const [editingOrder, setEditingOrder] = useState<LabOrder | null>(null);
 
   // New Order Form
-  const [patientId, setPatientId] = useState(mockPatients[0].id);
-  const [doctorId, setDoctorId] = useState(mockDoctors[0].id);
+  const [patientId, setPatientId] = useState(mockPatients[0]?.id || '');
+  const [doctorId, setDoctorId] = useState(mockDoctors[0]?.id || '');
   const [urgency, setUrgency] = useState<LabOrder['urgency']>('routine');
   const [testItems, setTestItems] = useState<LabOrderItem[]>([
     {
@@ -75,6 +75,14 @@ export const LaboratoryList: React.FC = () => {
 
     const patient = mockPatients.find(p => p.id === patientId) || mockPatients[0];
     const doctor = mockDoctors.find(d => d.id === doctorId) || mockDoctors[0];
+    if (!patient) {
+      toast.error('No registered patient found. Please register a patient first.');
+      return;
+    }
+    if (!doctor) {
+      toast.error('No registered doctor found. Please register a doctor first.');
+      return;
+    }
     const newOrderNum = generateCustomId('LAB');
 
     const newOrder: LabOrder = {

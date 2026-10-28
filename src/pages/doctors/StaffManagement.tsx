@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
 import { mockDoctors, mockStaff, mockDepartments, mockAppointments } from '../../lib/mockData';
+import {
+  getStoredDoctors,
+  getStoredStaff,
+  addStoredDoctor,
+  addStoredStaff,
+} from '../../lib/storage';
 import { Doctor, Staff } from '../../types';
 import { SearchInput } from '../../components/common/SearchInput';
 import { Badge } from '../../components/common/Badge';
@@ -23,8 +29,8 @@ import toast from 'react-hot-toast';
 
 export const StaffManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'doctors' | 'staff'>('doctors');
-  const [doctors, setDoctors] = useState<Doctor[]>(mockDoctors);
-  const [staff, setStaff] = useState<Staff[]>(mockStaff);
+  const [doctors, setDoctors] = useState<Doctor[]>(() => getStoredDoctors(mockDoctors));
+  const [staff, setStaff] = useState<Staff[]>(() => getStoredStaff(mockStaff));
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
 
@@ -77,7 +83,8 @@ export const StaffManagement: React.FC = () => {
       avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80',
     };
 
-    setDoctors([newDoctor, ...doctors]);
+    addStoredDoctor(newDoctor);
+    setDoctors(getStoredDoctors());
     setIsAddDoctorOpen(false);
     toast.success(`Doctor profile for ${docName} created with ID ${newDocId}`);
     // Reset form
@@ -108,7 +115,8 @@ export const StaffManagement: React.FC = () => {
       isActive: true,
     };
 
-    setStaff([newStaffMember, ...staff]);
+    addStoredStaff(newStaffMember);
+    setStaff(getStoredStaff());
     setIsAddStaffOpen(false);
     toast.success(`Staff member ${staffName} added with ID ${newStaffId}`);
     setStaffName('');

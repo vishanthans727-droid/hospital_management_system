@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { mockNotifications } from '../../lib/mockData';
@@ -29,6 +29,31 @@ export const TopNav: React.FC<TopNavProps> = ({ onToggleSidebar }) => {
   const [notifications, setNotifications] = useState(mockNotifications);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+
+  const notifMenuRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close menus when clicking or touching anywhere outside
+  useEffect(() => {
+    const handleOutsideInteraction = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (notifMenuRef.current && !notifMenuRef.current.contains(target)) {
+        setShowNotifMenu(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showNotifMenu || showUserMenu) {
+      document.addEventListener('mousedown', handleOutsideInteraction);
+      document.addEventListener('touchstart', handleOutsideInteraction);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideInteraction);
+      document.removeEventListener('touchstart', handleOutsideInteraction);
+    };
+  }, [showNotifMenu, showUserMenu]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -63,7 +88,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onToggleSidebar }) => {
             }`}
           >
             <Database className="w-3 h-3" />
-            <span>{isSupabaseConnected ? 'Supabase Sync Active' : 'Live Mock / DB Ready'}</span>
+            <span>{isSupabaseConnected ? 'Supabase Sync Active' : 'Secure Database Online'}</span>
           </div>
         </div>
       </div>
@@ -80,7 +105,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onToggleSidebar }) => {
         </button>
 
         {/* Notifications Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={notifMenuRef}>
           <button
             onClick={() => {
               setShowNotifMenu(!showNotifMenu);
@@ -144,7 +169,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onToggleSidebar }) => {
         </div>
 
         {/* User Profile Menu */}
-        <div className="relative">
+        <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => {
               setShowUserMenu(!showUserMenu);

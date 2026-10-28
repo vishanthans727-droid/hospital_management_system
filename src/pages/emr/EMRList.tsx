@@ -34,7 +34,7 @@ export const EMRList: React.FC = () => {
 
   // New EMR record modal
   const [isNewRecordOpen, setIsNewRecordOpen] = useState(false);
-  const [patientId, setPatientId] = useState(mockPatients[0].id);
+  const [patientId, setPatientId] = useState(mockPatients[0]?.id || '');
   const [chiefComplaint, setChiefComplaint] = useState('');
   const [clinicalNotes, setClinicalNotes] = useState('');
   const [diagnosis, setDiagnosis] = useState('');
@@ -58,12 +58,16 @@ export const EMRList: React.FC = () => {
     }
 
     const patient = mockPatients.find(p => p.id === patientId) || mockPatients[0];
+    if (!patient) {
+      toast.error('No registered patient found. Please register a patient first.');
+      return;
+    }
     const newRecord: MedicalRecord = {
       id: `rec-${Date.now()}`,
       patientId: patient.id,
       patientName: patient.fullName,
-      doctorId: user?.id || 'usr-doc-01',
-      doctorName: user?.fullName || 'Dr. Marcus Chen',
+      doctorId: user?.id || 'doc-active',
+      doctorName: user?.fullName || 'Attending Physician',
       recordDate: new Date().toISOString().slice(0, 10),
       chiefComplaint,
       vitals: {
@@ -95,7 +99,10 @@ export const EMRList: React.FC = () => {
 
   const filteredRecords = records.filter(rec => {
     if (role === 'patient') {
-      return rec.patientName.toLowerCase() === user?.fullName.toLowerCase() || rec.patientId === 'pat-01';
+      return (
+        (user?.fullName && rec.patientName.toLowerCase() === user.fullName.toLowerCase()) ||
+        rec.patientId === user?.id
+      );
     }
     return (
       rec.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||

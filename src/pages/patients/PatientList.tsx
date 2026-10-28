@@ -1,5 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { mockPatients } from '../../lib/mockData';
+import {
+  getStoredPatients,
+  addStoredPatient,
+  updateStoredPatient,
+} from '../../lib/storage';
 import { Patient } from '../../types';
 import { SearchInput } from '../../components/common/SearchInput';
 import { Badge } from '../../components/common/Badge';
@@ -31,11 +36,27 @@ import {
 import toast from 'react-hot-toast';
 
 export const PatientList: React.FC = () => {
-  const [patients, setPatients] = useState<Patient[]>(mockPatients);
+  const [patients, setPatients] = useState<Patient[]>(() => getStoredPatients(mockPatients));
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [bloodFilter, setBloodFilter] = useState<string>('all');
   const [showArchived, setShowArchived] = useState(false);
+
+  // Sync state if patients are registered or modified elsewhere
+  useEffect(() => {
+    const handlePatientsChanged = (e: Event) => {
+      const customEvent = e as CustomEvent<Patient[]>;
+      if (customEvent.detail) {
+        setPatients(customEvent.detail);
+      } else {
+        setPatients(getStoredPatients());
+      }
+    };
+    window.addEventListener('medicare_patients_changed', handlePatientsChanged);
+    return () => {
+      window.removeEventListener('medicare_patients_changed', handlePatientsChanged);
+    };
+  }, []);
 
   // Modals state
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -104,7 +125,8 @@ export const PatientList: React.FC = () => {
       updatedAt: new Date().toISOString(),
     };
 
-    setPatients([newPatient, ...patients]);
+    addStoredPatient(newPatient);
+    setPatients(getStoredPatients());
     setIsRegisterOpen(false);
     resetForm();
     toast.success(`Patient registered successfully with ID ${newId}`);
@@ -114,23 +136,20 @@ export const PatientList: React.FC = () => {
     e.preventDefault();
     if (!editingPatient) return;
 
-    setPatients(prev =>
-      prev.map(p =>
-        p.id === editingPatient.id
-          ? {
-              ...p,
-              fullName: formName,
-              email: formEmail,
-              phone: formPhone,
-              address: formAddress,
-              emergencyContactName: formEmergencyName,
-              emergencyContactPhone: formEmergencyPhone,
-              allergies: formAllergies ? formAllergies.split(',').map(s => s.trim()) : [],
-              updatedAt: new Date().toISOString(),
-            }
-          : p
-      )
-    );
+    const updated: Patient = {
+      ...editingPatient,
+      fullName: formName,
+      email: formEmail,
+      phone: formPhone,
+      address: formAddress,
+      emergencyContactName: formEmergencyName,
+      emergencyContactPhone: formEmergencyPhone,
+      allergies: formAllergies ? formAllergies.split(',').map(s => s.trim()) : [],
+      updatedAt: new Date().toISOString(),
+    };
+
+    updateStoredPatient(updated);
+    setPatients(getStoredPatients());
     setEditingPatient(null);
     resetForm();
     toast.success('Patient details updated successfully');
@@ -148,11 +167,13 @@ export const PatientList: React.FC = () => {
   };
 
   const toggleArchive = (p: Patient) => {
-    setPatients(prev =>
-      prev.map(item =>
-        item.id === p.id ? { ...item, isArchived: !item.isArchived } : item
-      )
-    );
+    const updated: Patient = {
+      ...p,
+      isArchived: !p.isArchived,
+      updatedAt: new Date().toISOString(),
+    };
+    updateStoredPatient(updated);
+    setPatients(getStoredPatients());
     toast.success(
       p.isArchived ? `Restored record for ${p.fullName}` : `Archived medical record for ${p.fullName}`
     );

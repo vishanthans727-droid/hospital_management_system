@@ -35,7 +35,7 @@ export const BillingList: React.FC = () => {
   const [payingInvoice, setPayingInvoice] = useState<Invoice | null>(null);
 
   // New Invoice Form
-  const [patientId, setPatientId] = useState(mockPatients[0].id);
+  const [patientId, setPatientId] = useState(mockPatients[0]?.id || '');
   const [dueDate, setDueDate] = useState('2026-10-30');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [items, setItems] = useState<InvoiceItem[]>([
@@ -92,6 +92,10 @@ export const BillingList: React.FC = () => {
   const handleCreateInvoice = (e: React.FormEvent) => {
     e.preventDefault();
     const patient = mockPatients.find(p => p.id === patientId) || mockPatients[0];
+    if (!patient) {
+      toast.error('No registered patient found. Please register a patient first.');
+      return;
+    }
     const subtotal = calculateSubtotal();
     const tax = Math.round(subtotal * 0.05); // 5% tax
     const total = Math.max(0, subtotal + tax - discountAmount);

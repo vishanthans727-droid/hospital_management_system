@@ -28,7 +28,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
-  const { user, role, switchDemoRole } = useAuth();
+  const { user, role } = useAuth();
 
   interface NavItem {
     name: string;
@@ -176,35 +176,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             )}
           </NavLink>
         ))}
-      </div>
-
-      {/* Role Switcher for Testing */}
-      <div className="p-3 m-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-xs">
-        <div className="flex items-center justify-between mb-2">
-          <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-            <Sparkles className="w-3.5 h-3.5 text-sky-600" />
-            Switch Demo Role
-          </span>
-          <span className="text-[10px] uppercase font-bold text-sky-600 bg-sky-100 dark:bg-sky-950 px-1.5 py-0.2 rounded">
-            {role}
-          </span>
-        </div>
-        <div className="grid grid-cols-2 gap-1.5">
-          {(['administrator', 'doctor', 'nurse', 'receptionist', 'patient'] as UserRole[]).map(r => (
-            <button
-              key={r}
-              onClick={() => switchDemoRole(r)}
-              className={cn(
-                'px-2 py-1 rounded text-[11px] font-medium capitalize text-left transition-colors truncate',
-                role === r
-                  ? 'bg-sky-600 text-white font-semibold shadow-xs'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-              )}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
       </div>
     </aside>
   );

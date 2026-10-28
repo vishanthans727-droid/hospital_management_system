@@ -5,6 +5,7 @@ import {
   mockPatients,
   mockDoctors,
 } from '../../lib/mockData';
+import { getStoredPrescriptions, addStoredPrescription } from '../../lib/storage';
 import { Prescription, PrescriptionItem } from '../../types';
 import { SearchInput } from '../../components/common/SearchInput';
 import { Badge } from '../../components/common/Badge';
@@ -27,13 +28,13 @@ import toast from 'react-hot-toast';
 
 export const PrescriptionList: React.FC = () => {
   const { user, role } = useAuth();
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>(mockPrescriptions);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>(() => getStoredPrescriptions(mockPrescriptions));
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPrintRx, setSelectedPrintRx] = useState<Prescription | null>(null);
 
   // New Prescription modal
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [patientId, setPatientId] = useState(mockPatients[0].id);
+  const [patientId, setPatientId] = useState(mockPatients[0]?.id || '');
   const [diagnosis, setDiagnosis] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<PrescriptionItem[]>([
@@ -87,6 +88,10 @@ export const PrescriptionList: React.FC = () => {
     }
 
     const patient = mockPatients.find(p => p.id === patientId) || mockPatients[0];
+    if (!patient) {
+      toast.error('No patient selected or registered. Please register a patient first.');
+      return;
+    }
     const newRxCode = generateCustomId('RX');
 
     const newPrescription: Prescription = {
@@ -94,12 +99,12 @@ export const PrescriptionList: React.FC = () => {
       prescriptionCode: newRxCode,
       patientId: patient.id,
       patientName: patient.fullName,
-      patientAge: 42,
+      patientAge: 35,
       patientGender: patient.gender,
-      doctorId: user?.id || 'doc-01',
-      doctorName: user?.fullName || 'Dr. Marcus Chen',
-      doctorSpecialization: user?.departmentName || 'Cardiology',
-      doctorLicense: 'MD-CARD-99218',
+      doctorId: user?.id || 'doc-active',
+      doctorName: user?.fullName || 'Attending Physician',
+      doctorSpecialization: user?.departmentName || 'General Medicine',
+      doctorLicense: 'MED-MD-LIC',
       date: new Date().toISOString().slice(0, 10),
       diagnosis,
       notes,
@@ -108,7 +113,8 @@ export const PrescriptionList: React.FC = () => {
       createdAt: new Date().toISOString(),
     };
 
-    setPrescriptions([newPrescription, ...prescriptions]);
+    addStoredPrescription(newPrescription);
+    setPrescriptions(getStoredPrescriptions());
     setIsCreateOpen(false);
     setDiagnosis('');
     setNotes('');
@@ -128,7 +134,10 @@ export const PrescriptionList: React.FC = () => {
 
   const filteredPrescriptions = prescriptions.filter(rx => {
     if (role === 'patient') {
-      return rx.patientName.toLowerCase() === user?.fullName.toLowerCase() || rx.patientId === 'pat-01';
+      return (
+        (user?.fullName && rx.patientName.toLowerCase() === user.fullName.toLowerCase()) ||
+        rx.patientId === user?.id
+      );
     }
     return (
       rx.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
